@@ -11,8 +11,38 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
-	},
-} satisfies ExportedHandler<Env>;
+import { Hono } from 'hono';
+
+import { initializeEnvironment } from './env';
+import { feeds } from './feeds';
+import { processBlogPosts } from './use-cases/process-blog-posts';
+import { bskyPost } from './services/bsky';
+import { z } from 'zod';
+
+const app = new Hono<{ Bindings: Env }>();
+
+app.get('/all', async (c) => {
+  try {
+    initializeEnvironment(c.env);
+    await Promise.allSettled(feeds.map((f) => processBlogPosts(f)));
+    return c.json({ message: 'enqueued' })
+  } catch (err) {
+    console.log(JSON.stringify(err, null, 4));
+  }
+});
+
+app.post('/bsky', async (c) => {
+  try {
+    initializeEnvironment(c.env);
+
+    const body = await c.req.json();
+    const parsedBody = z.object({ text: z.string() }).parse(body);
+
+    await bskyPost(parsedBody.text);
+    return c.json({ message: 'enqueued' })
+  } catch (err) {
+    console.log(JSON.stringify(err, null, 4));
+  }
+})
+
+export default app
