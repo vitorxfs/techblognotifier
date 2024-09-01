@@ -1,46 +1,50 @@
-import crypto from 'node:crypto';
-import OAuth from 'oauth-1.0a';
+/*
+** X integration is temporarily removed
+*/
 
-import { environment } from '../../env';
+// import crypto from 'node:crypto';
+// import OAuth from 'oauth-1.0a';
 
-export async function tweet(tw: string): Promise<global.Response> {
-  const method = 'POST';
-  const url = 'https://api.twitter.com/2/tweets';
+// import { environment } from '../../env';
 
-  return fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': buildOAuth(method, url),
-    },
-    body: JSON.stringify({
-      text: tw,
-    }),
-    redirect: 'follow'
-  });
-}
+// export async function tweet(tw: string): Promise<global.Response> {
+//   const method = 'POST';
+//   const url = 'https://api.twitter.com/2/tweets';
 
-function buildOAuth(method: string, url: string): string {
-  console.log(environment);
-  const oauth = new OAuth({
-    consumer: { key: environment.TWITTER_CONSUMER_KEY, secret: environment.TWITTER_CONSUMER_KEY_SECRET },
-    signature_method: 'HMAC-SHA1',
-    hash_function(base_string, key) {
-        return crypto
-            .createHmac('sha1', key)
-            .update(base_string)
-            .digest('base64')
-    },
-  });
+//   return fetch(url, {
+//     method,
+//     headers: {
+//       'Content-Type': 'application/json',
+//       'Authorization': buildOAuth(method, url),
+//     },
+//     body: JSON.stringify({
+//       text: tw,
+//     }),
+//     redirect: 'follow'
+//   });
+// }
 
-  return oauth.toHeader({
-    ...oauth.authorize({
-      method,
-      url,
-    }, {
-      key: environment.TWITTER_ACCESS_TOKEN,
-      secret: environment.TWITTER_ACCESS_TOKEN_SECRET
-    }),
-  }).Authorization
-}
+// function buildOAuth(method: string, url: string): string {
+//   console.log(environment);
+//   const oauth = new OAuth({
+//     consumer: { key: environment.TWITTER_CONSUMER_KEY, secret: environment.TWITTER_CONSUMER_KEY_SECRET },
+//     signature_method: 'HMAC-SHA1',
+//     hash_function(base_string, key) {
+//         return crypto
+//             .createHmac('sha1', key)
+//             .update(base_string)
+//             .digest('base64')
+//     },
+//   });
+
+//   return oauth.toHeader({
+//     ...oauth.authorize({
+//       method,
+//       url,
+//     }, {
+//       key: environment.TWITTER_ACCESS_TOKEN,
+//       secret: environment.TWITTER_ACCESS_TOKEN_SECRET
+//     }),
+//   }).Authorization
+// }
 

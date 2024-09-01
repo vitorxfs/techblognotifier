@@ -21,16 +21,6 @@ import { z } from 'zod';
 
 const app = new Hono<{ Bindings: Env }>();
 
-app.get('/all', async (c) => {
-  try {
-    initializeEnvironment(c.env);
-    await Promise.allSettled(feeds.map((f) => processBlogPosts(f)));
-    return c.json({ message: 'enqueued' })
-  } catch (err) {
-    console.log(JSON.stringify(err, null, 4));
-  }
-});
-
 app.post('/bsky', async (c) => {
   try {
     initializeEnvironment(c.env);
@@ -45,4 +35,20 @@ app.post('/bsky', async (c) => {
   }
 })
 
-export default app
+export default {
+  async scheduled(
+    controller: ScheduledController,
+    env: Env,
+    ctx: ExecutionContext,
+  ) {
+    try {
+      initializeEnvironment(env);
+      await Promise.allSettled(feeds.map((f) => processBlogPosts(f)));
+    } catch (err) {
+      console.log(JSON.stringify(err, null, 4));
+    }
+  },
+  fetch(request: Request, env: Env) {
+    return app.fetch(request, env);
+  },
+};

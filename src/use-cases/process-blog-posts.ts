@@ -12,16 +12,18 @@ export async function processBlogPosts(url: string): Promise<global.Response> {
   }))
 
   const newPosts = getNewPosts(posts, +environment.TIMEGAP_IN_HOURS);
-
   if (!newPosts.length) { return; }
+
   return Promise.all(newPosts.map((p) => {
     const tw = buildMessage(p);
-    // return sendTelegram(tw, environment.TELEGRAM_CHAT_ID, environment.TELEGRAM_BOT_TOKEN);
 
     return enqueueHttp({
       url: environment.WORKER_URL+'/bsky',
       method: 'POST',
       body: { text: tw },
+      headers: {
+        'Authorization': `Bearer ${environment.API_PASSWORD}`,
+      }
     });
   }))
 }

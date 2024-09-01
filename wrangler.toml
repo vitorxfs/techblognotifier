@@ -4,6 +4,13 @@ main = "src/index.ts"
 compatibility_date = "2024-08-15"
 compatibility_flags = ["nodejs_compat"]
 
+[env.dev.triggers]
+crons = ["0 */4 * * *"]
+
+[vars]
+BLUESKY_BOT_USERNAME = "techblognotifier.bsky.social"
+TIMEGAP_IN_HOURS = 4
+
 # Automatically place your workloads in an optimal location to minimize latency.
 # If you are running back-end logic in a Worker, running it closer to your back-end infrastructure
 # rather than the end user may result in better performance.
