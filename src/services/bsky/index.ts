@@ -1,8 +1,6 @@
 import { AtpAgent, RichText } from '@atproto/api';
 import { environment } from '../../env';
 
-
-
 let agent: AtpAgent;
 async function login(): Promise<AtpAgent> {
   if (agent) { return agent }

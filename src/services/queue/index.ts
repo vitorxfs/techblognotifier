@@ -1,4 +1,5 @@
-import { Client, PublishToUrlResponse } from "@upstash/qstash"
+import { Client, PublishToUrlResponse } from "@upstash/qstash";
+
 import { environment } from '../../env';
 
 export async function enqueueHttp(opts: {

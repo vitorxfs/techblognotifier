@@ -23,7 +23,7 @@ export async function getRSSData(url: string): Promise<RSSResult> {
   const xml = await res.text();
   const parsed = parser.parse(xml);
   const feed = validate(parsed.feed || parsed.rss);
-  console.log(url);
+
   return parseRSS(feed);
 }
 

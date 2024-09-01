@@ -1,3 +1,8 @@
+/*
+* Some feeds for some reason are not working properly. Check if it's working,
+* and then check if it works with our parser.
+*/
+
 export const feeds = [
   "https://netflixtechblog.com/feed",
   "https://deezer.io/feed",

@@ -1,29 +1,20 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.toml`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+import { Context, Hono } from 'hono';
+import { z } from 'zod';
 
-import { Hono } from 'hono';
-
-import { initializeEnvironment } from './env';
+import { environment, initializeEnvironment } from './env';
 import { feeds } from './feeds';
 import { processBlogPosts } from './use-cases/process-blog-posts';
 import { bskyPost } from './services/bsky';
-import { z } from 'zod';
 
 const app = new Hono<{ Bindings: Env }>();
 
 app.post('/bsky', async (c) => {
   try {
     initializeEnvironment(c.env);
+
+    if (!isAuthorized(c)) {
+      return c.status(401);
+    }
 
     const body = await c.req.json();
     const parsedBody = z.object({ text: z.string() }).parse(body);
@@ -44,6 +35,7 @@ export default {
     try {
       initializeEnvironment(env);
       await Promise.allSettled(feeds.map((f) => processBlogPosts(f)));
+      return;
     } catch (err) {
       console.log(JSON.stringify(err, null, 4));
     }
@@ -52,3 +44,10 @@ export default {
     return app.fetch(request, env);
   },
 };
+
+function isAuthorized(c: Context): boolean {
+  const authToken = c.req.header('Authorization')?.replace('Bearer ', '');
+  if (!authToken) { return false; }
+  if (authToken !== environment.API_PASSWORD) { return false; }
+  return true;
+}
