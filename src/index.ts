@@ -5,25 +5,36 @@ import { environment, initializeEnvironment } from './env';
 import { feeds } from './feeds';
 import { processBlogPosts } from './use-cases/process-blog-posts';
 import { bskyPost } from './services/bsky';
+import { enqueueHttp } from './services/queue';
 
 const app = new Hono<{ Bindings: Env }>();
 
-app.post('/bsky', async (c) => {
-  try {
-    initializeEnvironment(c.env);
+app.post('/blog', async (c) => {
+  initializeEnvironment(c.env);
 
-    if (!isAuthorized(c)) {
-      return c.status(401);
-    }
-
-    const body = await c.req.json();
-    const parsedBody = z.object({ text: z.string() }).parse(body);
-
-    await bskyPost(parsedBody.text);
-    return c.json({ message: 'enqueued' })
-  } catch (err) {
-    console.log(JSON.stringify(err, null, 4));
+  if (!isAuthorized(c)) {
+    return c.status(401);
   }
+
+  const body = await c.req.json();
+  const parsedBody = z.object({ url: z.string() }).parse(body);
+
+  await processBlogPosts(parsedBody.url);
+  return c.json({ message: 'enqueued' });
+})
+
+app.post('/bsky', async (c) => {
+  initializeEnvironment(c.env);
+
+  if (!isAuthorized(c)) {
+    return c.status(401);
+  }
+
+  const body = await c.req.json();
+  const parsedBody = z.object({ text: z.string() }).parse(body);
+
+  await bskyPost(parsedBody.text);
+  return c.json({ message: 'enqueued' });
 })
 
 export default {
@@ -32,13 +43,16 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ) {
-    try {
-      initializeEnvironment(env);
-      await Promise.allSettled(feeds.map((f) => processBlogPosts(f)));
-      return;
-    } catch (err) {
-      console.log(JSON.stringify(err, null, 4));
-    }
+    initializeEnvironment(env);
+
+    return Promise.all(feeds.map((url) => enqueueHttp({
+      url: environment.WORKER_URL+'/blog',
+      method: 'POST',
+      body: { url },
+      headers: {
+        'Authorization': `Bearer ${environment.API_PASSWORD}`,
+      }
+    })));
   },
   fetch(request: Request, env: Env) {
     return app.fetch(request, env);
